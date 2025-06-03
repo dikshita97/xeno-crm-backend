@@ -1,54 +1,40 @@
-import { Campaign } from '../models/Campaign';
-import { CommunicationLog } from '../models/CommunicationLog';
-import { Segment } from '../models/Segment';
-import { Customer } from '../models/Customer';
-import { redisClient } from '../config/redis';
-import { generateMessageVariants } from '../utils/openai';
-import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
+import express from 'express';
+import cors from 'cors';
+import session from 'express-session';
+import passport from 'passport';
+import dotenv from 'dotenv';
+import bodyParser from 'body-parser';
+import { connectDB } from './config/db';
+import { initGooglePassport } from './utils/passportGoogle';
+import authRoutes from './routes/auth';
+import segmentRoutes from './routes/segment';
+import campaignRoutes from './routes/campaign';
+import vendorRoutes from './routes/vendor';
 
-export const startCampaign = async (segmentId: string, userId: string) => {
-  const segment = await Segment.findById(segmentId);
-  if (!segment) throw new Error('Segment not found');
+dotenv.config();
+(async () => {
+  await connectDB(process.env.MONGODB_URI!);
+})();
 
-  // Generate message template with AI
-  const [messageTemplate] = await generateMessageVariants('bring back inactive users');
+initGooglePassport();
 
-  const campaign = await Campaign.create({
-    segment: segment._id,
-    messageTemplate,
-    createdBy: userId
-  });
+const app = express();
+app.use(cors({ origin: true, credentials: true }));
+app.use(bodyParser.json());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET!,
+    resave: false,
+    saveUninitialized: false
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
-  // Find customers matching rule (simple filter example)
-  const criteria: any = {};
-  if (segment.rule.totalSpend) criteria.totalSpend = { $gte: segment.rule.totalSpend };
-  if (segment.rule.lastPurchaseBefore)
-    criteria.lastPurchase = { $lte: new Date(segment.rule.lastPurchaseBefore) };
+app.use('/auth', authRoutes);
+app.use('/segments', segmentRoutes);
+app.use('/campaigns', campaignRoutes);
+app.use('/vendor', vendorRoutes);
 
-  const customers = await Customer.find(criteria);
-
-  // Insert communication logs
-  const logs = customers.map((c) => ({
-    campaign: campaign._id,
-    customer: c._id,
-    message: messageTemplate.replace('{{name}}', c.name),
-    status: 'PENDING'
-  }));
-  await CommunicationLog.insertMany(logs);
-
-  // Send messages via Dummy Vendor
-  for (const customer of customers) {
-    const payload = {
-      recipient: customer.email,
-      text: messageTemplate.replace('{{name}}', customer.name),
-      callbackUrl: `${process.env.BASE_URL}/vendor/receipt`
-    };
-    await axios.post(`${process.env.BASE_URL}/vendor/send`, payload, {
-      // internal call
-      timeout: 1000
-    });
-  }
-
-  return campaign;
-};
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`API running on :${PORT}`));
