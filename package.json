@@ -1,3 +1,39 @@
 {
-  "name": "xeno-crm-backend"
+  "name": "xeno-crm-backend",
+  "version": "1.0.0",
+  "description": "Backend for Xeno CRM internship assignment",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "nodemon -r ts-node/register src/server.ts",
+    "build": "tsc -p .",
+    "start": "node dist/server.js",
+    "consume": "ts-node src/consumers/receiptConsumer.ts"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.6.4",
+    "openai": "^4.14.0",
+    "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0",
+    "redis": "^4.6.7",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.2",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/express-session": "^1.17.6",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.11.3",
+    "@types/passport-google-oauth20": "^2.0.10",
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.3"
+  }
 }
