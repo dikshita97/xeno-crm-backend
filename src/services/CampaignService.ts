@@ -20,6 +20,22 @@ export const startCampaign = async (segmentId: string, userId: string) => {
     createdBy: userId
   });
 
+//Interview part
+  /*async function* paginateCustomers(cretiria, batchSize = 1000) {
+    let skip = 0, hasMore = true;
+    while(hasMore) {
+      const batch = await Customer.find(criteria).skip(skip).limit(batchSize);
+      if(batch.length === 0) break;
+      yield batch;
+      skip += batchSize;
+    }
+  }
+
+  const CONCURRENCY = 20; //example
+  const pLimit = require('p-limit');
+  const limit = pLimit(CONCURRENCY);*/
+
+  //export const startCampaign = async (segmentId: string, userId: string)
   // Find customers matching rule (simple filter example)
   const criteria: any = {};
   if (segment.rule.totalSpend) criteria.totalSpend = { $gte: segment.rule.totalSpend };
